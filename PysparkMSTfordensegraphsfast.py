@@ -111,10 +111,15 @@ def partition_edges(E, x):
     """
     S = [set() for i in range(math.ceil(x))]
     step = 1 / math.ceil(x)
+    # Go over all edges
     for i in range(len(E)):
         for j in E[i]:
+            # Hash it to a partition
             bucket = math.floor(random.random() / step)
+            # And add the edge to it
             S[bucket].add((i, j, E[i][j]))
+    # Change back from set partitions to list partitions
+    # Because thats what the other guy also did
     L = [[] for i in range(math.ceil(x))]
     for i in range(math.ceil(x)):
         L[i] = list(S[i])
@@ -249,7 +254,9 @@ def reduce_edges(vertices, E, c, epsilon):
     # k = math.ceil(n ** ((c - epsilon) / 2))
     # U, V = partion_vertices(vertices, k)
 
+    # We partition all edges into |E| / n^1+eps partitions
     S = partition_edges(E, total_edges(E) / (n ** (1 + epsilon)))
+    # We send the subgraph G=(V, E_i) to each machine
     rddS = sc.parallelize(S).map(lambda x: (find_mst(vertices, [], x)))
     both = rddS.collect()
     # rddUV = sc.parallelize(U).cartesian(sc.parallelize(V)).map(lambda x: get_edges(x[0], x[1], E)).map(
