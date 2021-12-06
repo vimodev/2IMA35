@@ -102,6 +102,24 @@ def partion_vertices(vertices, k):
             V[i % k].add(verticesV[i])
     return U, V
 
+def partition_edges(E, x):
+    """
+    Partition the edge set E into x smaller subsets
+    :param E: All edges
+    :param x: number of subsets that need to be created
+    :return E divided into x subsets
+    """
+    S = [set() for i in range(math.ceil(x))]
+    step = 1 / math.ceil(x)
+    for i in range(len(E)):
+        for j in E[i]:
+            bucket = math.floor(random.random() / step)
+            S[bucket].add((i, j, E[i][j]))
+    L = [[] for i in range(math.ceil(x))]
+    for i in range(math.ceil(x)):
+        L[i] = list(S[i])
+    return L
+
 
 def get_key(item):
     """
@@ -173,8 +191,8 @@ def find_mst(U, V, E):
                 E.remove(E[0])
     for edge in E:
         remove_edges.add(edge)
-    if len(mst) != len(vertices) - 1 or len(connected_component) != len(vertices):
-        print("Warning: parition cannot have a full MST! Missing edges to create full MST.")
+    #if len(mst) != len(vertices) - 1 or len(connected_component) != len(vertices):
+        #print("Warning: parition cannot have a full MST! Missing edges to create full MST.")
         # print("Error: MST found cannot be correct \n Length mst: ", len(mst), "\n Total connected vertices: ",
         #       len(connected_component), "\n Number of vertices: ", len(vertices))
     return mst, remove_edges
@@ -200,6 +218,18 @@ def get_edges(U, V, E):
     return U, V, edge_list
 
 
+def total_edges(E):
+    """
+    Compute total number of edges, to be sure
+    :param E: the edge set
+    :return |E|
+    """
+    c = 0
+    for i in range(len(E)):
+        c += len(E[i])
+    return c
+
+
 def reduce_edges(vertices, E, c, epsilon):
     """
     Uses PySpark to distribute the computation of the MSTs,
@@ -218,9 +248,13 @@ def reduce_edges(vertices, E, c, epsilon):
     n = len(vertices)
     k = math.ceil(n ** ((c - epsilon) / 2))
     U, V = partion_vertices(vertices, k)
-    rddUV = sc.parallelize(U).cartesian(sc.parallelize(V)).map(lambda x: get_edges(x[0], x[1], E)).map(
-        lambda x: (find_mst(x[0], x[1], x[2])))
-    both = rddUV.collect()
+
+    S = partition_edges(E, total_edges(E) / (n ** (1 + epsilon)))
+    rddS = sc.parallelize(S).map(lambda x: (find_mst(vertices, [], x)))
+    both = rddS.collect()
+    # rddUV = sc.parallelize(U).cartesian(sc.parallelize(V)).map(lambda x: get_edges(x[0], x[1], E)).map(
+    #     lambda x: (find_mst(x[0], x[1], x[2])))
+    # both = rddUV.collect()
 
     mst = []
     removed_edges = set()
