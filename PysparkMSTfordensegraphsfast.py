@@ -246,8 +246,8 @@ def reduce_edges(vertices, E, c, epsilon):
     sc = SparkContext.getOrCreate(conf=conf)
 
     n = len(vertices)
-    k = math.ceil(n ** ((c - epsilon) / 2))
-    U, V = partion_vertices(vertices, k)
+    # k = math.ceil(n ** ((c - epsilon) / 2))
+    # U, V = partion_vertices(vertices, k)
 
     S = partition_edges(E, total_edges(E) / (n ** (1 + epsilon)))
     rddS = sc.parallelize(S).map(lambda x: (find_mst(vertices, [], x)))
