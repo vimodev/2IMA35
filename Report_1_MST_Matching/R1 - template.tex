@@ -1,0 +1,101 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath,amssymb}
+\usepackage{a4wide}
+\usepackage{color,graphicx}
+\usepackage{algorithm,algpseudocode}
+  \newcommand{\algcaption}[1]{{\small \caption{#1}}}
+  \renewcommand{\thealgorithm}{\arabic{algorithm}}
+
+
+%--------------------------------------------------------------------------------------------------------
+% Theorem-Like Environments
+%--------------------------------------------------------------------------------------------------------
+\newtheorem{defin}{Definition}
+  \newenvironment{mydefinition}{\begin{defin} \sl}{\end{defin}}
+\newtheorem{theo}[defin]{Theorem}
+  \newenvironment{mytheorem}{\begin{theo} \sl}{\end{theo}}
+\newtheorem{lem}[defin]{Lemma}
+  \newenvironment{lemma}{\begin{lem} \sl}{\end{lem}}
+\newtheorem{coro}[defin]{Corollary}
+  \newenvironment{corollary}{\begin{coro} \sl}{\end{coro}}
+\newtheorem{obse}[defin]{Observation}
+  \newenvironment{observation}{\begin{obse} \sl}{\end{obse}}
+\newenvironment{proof}{\emph{Proof.}}{\hfill $\Box$ \medskip\\}
+
+
+%--------------------------------------------------------------------------------------------------------
+\title{Title of your report}
+\author{S.~Tudent~(12345678)}
+\date{}
+%--------------------------------------------------------------------------------------------------------
+
+\begin{document}
+
+
+
+\maketitle
+
+In these guidelines we provide a more detailed idea of what is expected of your experiments and of the report. 
+For each section there is a rough indication of how much text is expected and which figures. 
+Depending on your results certain parts may require more or less text or more or fewer figures. 
+The main goal of your experiments is to study the performance, running time, and number of rounds 
+of one of the MapReduce algorithms that is presented in the class. 
+We have learned two algorithms for the MST problem. 
+The first algorithm is for dense graphs and needs $O(1/\epsilon)$ communication rounds. 
+The second algorithm is for general graphs and needs $O(\log(n))$ rounds. 
+You can choose either one that you think you can  implement better and do your experiments. 
+
+
+%--------------------------------------------------------------------------------------------------------
+\section{Introduction}
+\label{se:introduction}
+%--------------------------------------------------------------------------------------------------------
+\emph{[1-2 paragraphs]}
+A brief introduction of what the goal of your experiments is.
+
+
+%--------------------------------------------------------------------------------------------------------
+\section{Data sets and experiments}
+\label{se:algorithms}
+%--------------------------------------------------------------------------------------------------------
+\emph{[3-4 paragraphs, with images of data types]}
+A description of your data sets and experimental setup (which algorithms are you running and with which parameters). Also briefly explain how these help you answer your research question.
+
+
+
+%--------------------------------------------------------------------------------------------------------
+\section{Experimental evaluation}
+\label{se:evaluation}
+%--------------------------------------------------------------------------------------------------------
+\emph{[2-3 paragraphs with figures]}
+A presentation of the results of your experiments as well as a brief discussion of them. 
+The presentation would generally be in the form of graphs, plots or tables. 
+Be sure to focus on the interesting parts. 
+%If in most of your experiments the initialization methods you are comparing are doing exactly the same, the focus on the ones where they are not and just state that the others show the exact same results. 
+In the discussion you consider what the results imply and discuss any potential irregularities or unexpected results.
+
+Depending on your research question, you can focus on one or several of the following measures depending on your research question.
+\begin{itemize}
+\item Convergence rate of the algorithm: How many communication rounds your algorithm needs before finishing? 
+
+\item Cluster quality: What is the output of your algorithm for each data set that you use with respect to the true clustering of that data set. 
+In case you have time, you can compare the output of your algorithm against the true clustering of the datasets using measures such as \emph{precision}, \emph{recall}, and \emph{F-score}. 
+
+\item Actual running time: How long does your algorithm take?
+\end{itemize}
+
+Note that for algorithms that use randomness, you may need to run the same experiment multiple times and 
+use an average value to obtain a reliable value for the convergence rate or the score. You should of course then also take this into account if you are comparing efficiency or runtime.
+
+%--------------------------------------------------------------------------------------------------------
+\section{Concluding remarks}
+\label{se:conclusions}
+%--------------------------------------------------------------------------------------------------------
+\emph{[1-2 paragraph]}
+A summary of the main conclusions of the experiments. Do your results help answer (part of) your initial research question?
+
+
+
+\end{document}
+
