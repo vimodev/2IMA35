@@ -232,7 +232,7 @@ def total_edges(E):
     c = 0
     for i in range(len(E)):
         c += len(E[i])
-    return c
+    return c / 2
 
 
 def reduce_edges(vertices, E, c, epsilon):
