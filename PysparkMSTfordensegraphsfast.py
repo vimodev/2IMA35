@@ -102,6 +102,7 @@ def partion_vertices(vertices, k):
             V[i % k].add(verticesV[i])
     return U, V
 
+
 def partition_edges(E, x):
     """
     Partition the edge set E into x smaller subsets
@@ -196,10 +197,10 @@ def find_mst(U, V, E):
                 E.remove(E[0])
     for edge in E:
         remove_edges.add(edge)
-    #if len(mst) != len(vertices) - 1 or len(connected_component) != len(vertices):
-        #print("Warning: parition cannot have a full MST! Missing edges to create full MST.")
-        # print("Error: MST found cannot be correct \n Length mst: ", len(mst), "\n Total connected vertices: ",
-        #       len(connected_component), "\n Number of vertices: ", len(vertices))
+    # if len(mst) != len(vertices) - 1 or len(connected_component) != len(vertices):
+    # print("Warning: parition cannot have a full MST! Missing edges to create full MST.")
+    # print("Error: MST found cannot be correct \n Length mst: ", len(mst), "\n Total connected vertices: ",
+    #       len(connected_component), "\n Number of vertices: ", len(vertices))
     return mst, remove_edges
 
 
@@ -369,6 +370,47 @@ def plot_mst(vertices, mst, intermediate=False, plot_cluster=False):
     return
 
 
+def prim(dataset):
+    vertex_count = len(dataset[0][0])
+    dm, E, size, vertex_coordinates = create_distance_matrix(dataset[0][0])
+
+    used = set()
+    unused = set()
+    start = random.randint(0, vertex_count)
+    used.add(start)
+
+    mst = []
+    for i in range(0, vertex_count):
+        if i != start:
+            unused.add(i)
+
+    print("[PRIM] Start creating MST...")
+    timestamp = datetime.now()
+    while len(unused) != 0:
+        if len(unused) % 100 == 0:
+            print(len(used), vertex_count)
+        min_weight = math.inf
+        s = -1
+        t = -1
+        for vertex in used:
+            for target in unused:
+                cost = dm[vertex][target]
+                if min_weight > cost:
+                    min_weight = cost
+                    s = vertex
+                    t = target
+        mst.append((s, t, dm[s][t]))
+        unused.remove(t)
+        used.add(t)
+    print("[PRIM] Found MST in: ", datetime.now() - timestamp)
+    score = 0
+    for edge in mst:
+        score = score+edge[2]
+    print("[PRIM] Score: ", score)
+    plot_mst(dataset[0][0], mst, False, False)
+    pass
+
+
 def main():
     """
     For every dataset, it creates the mst and plots the clustering
@@ -389,6 +431,7 @@ def main():
     # create_mst()
     datasets = get_clustering_data()
     for dataset in datasets:
+        prim(dataset)
         timestamp = datetime.now()
         print("Start creating Distance Matrix...")
         dm, E, size, vertex_coordinates = create_distance_matrix(dataset[0][0])
@@ -401,6 +444,10 @@ def main():
         print("Found MST in: ", datetime.now() - timestamp)
         print("Start creating plot of MST...")
         timestamp = datetime.now()
+        score = 0
+        for edge in mst:
+            score = score + edge[2]
+        print("[SPRK] Score: ", score)
         plot_mst(dataset[0][0], mst, False, False)
         print("Created plot of MST in: ", datetime.now() - timestamp)
 
@@ -408,5 +455,4 @@ def main():
 
 
 if __name__ == '__main__':
-    # Initial call to main function
     main()
