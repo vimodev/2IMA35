@@ -7,9 +7,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pyspark import SparkConf, SparkContext
 
+from collections import deque
+
 # Snap stanford
 from boruvka import boruvka
-from helpers import get_clustering_data, create_distance_matrix, get_key, plot_mst
+from helpers import get_clustering_data, create_distance_matrix, get_key, plot_mst, plot_clustering
 
 
 def partion_vertices(vertices, k):
@@ -288,6 +290,53 @@ def prim(dataset):
     print("[PRIM] Score: ", score)
     plot_mst(dataset[0][0], mst, False, False)
 
+def create_adjacency_list(n, mst):
+    adj = [[] for i in range(n)]
+    for edge in mst:
+        adj[edge[0]].append(edge[1])
+        adj[edge[1]].append(edge[0])
+    return adj
+
+def get_edge_cluster(clusters, e):
+    for c in clusters:
+        if e[0] in c and e[1] in c:
+            return clusters.index(c)
+
+def create_clustering(n, mst, k):
+    # Sort mst to get highest weighted edges
+    mst.sort(key= lambda x: x[2], reverse=True)
+    # Create adj matrix for ez BFS
+    adj = create_adjacency_list(n, mst)
+    # Initialize clusters data structure
+    clusters = []
+    # Initially everything in 1 cluster
+    clusters.append(list(range(n)))
+    if (k == 1):
+        return clusters
+    # Split clusters on longest edge
+    for c in range(k - 1):
+        # Remove the longest edge
+        rm = mst[c]
+        hc = get_edge_cluster(clusters, rm)
+        adj[rm[0]].remove(rm[1])
+        adj[rm[1]].remove(rm[0])
+        clusters.append([])
+        # Perform BFS on one of the edge's nodes
+        Q = deque()
+        explored = [False for i in range(n)]
+        explored[rm[0]] = True
+        Q.append(rm[0])
+        while (len(Q) != 0):
+            v = Q.popleft()
+            clusters[c+1].append(v)
+            clusters[hc].remove(v)
+            for trg in adj[v]:
+                if (explored[trg]):
+                    continue
+                explored[trg] = True
+                Q.append(trg)
+    return clusters
+
 
 def main():
     """
@@ -326,6 +375,9 @@ def main():
             score = score + edge[2]
         print("[SPRK] Score: ", score)
         plot_mst(dataset[0][0], mst, False, False)
+        k = 2
+        clusters = create_clustering(len(V), mst, k)
+        plot_clustering(dataset[0][0], clusters)
         print("Created plot of MST in: ", datetime.now() - timestamp)
 
     print("Done...")

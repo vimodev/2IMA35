@@ -69,6 +69,23 @@ def create_distance_matrix(dataset):
         dict[i] = dict2
     return d_matrix, dict, size, vertices
 
+def plot_clustering(vertices, clustering):
+    x = []
+    y = []
+    c = []
+    area = []
+    colors = ["g", "b", "r", "c", "m", "y", "k", "darkorange", "dodgerblue", "deeppink", "khaki", "purple",
+              "springgreen", "tomato", "slategray"]
+    for i in range(len(clustering)):
+        cluster = clustering[i]
+        for v in cluster:
+            x.append(float(vertices[v][0]))
+            y.append(float(vertices[v][1]))
+            area.append(0.1)
+            c.append(colors[i % len(colors)])
+    plt.scatter(x, y, c=c)
+    plt.show()
+    return
 
 def plot_mst(vertices, mst, intermediate=False, plot_cluster=False):
     x = []
