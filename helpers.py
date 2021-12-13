@@ -4,15 +4,14 @@ from matplotlib import pyplot as plt
 from sklearn.datasets import make_circles, make_moons, make_blobs
 
 
-def get_clustering_data():
+def get_clustering_data(n_samples=1500, noise=0):
     """
     Retrieves all toy datasets from sklearn
     :return: circles, moons, blobs datasets.
     """
-    n_samples = 1500
     noisy_circles = make_circles(n_samples=n_samples, factor=.5,
-                                 noise=.05)
-    noisy_moons = make_moons(n_samples=n_samples, noise=.05)
+                                 noise=noise)
+    noisy_moons = make_moons(n_samples=n_samples, noise=noise)
     blobs = make_blobs(n_samples=n_samples, random_state=8)
     no_structure = np.random.rand(n_samples, 2), None
 

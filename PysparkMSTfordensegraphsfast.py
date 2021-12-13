@@ -61,7 +61,6 @@ def partition_edges(E, x):
     return L
 
 
-
 def find_mst(U, V, E):
     """
     finds the mst of graph G = (U union V, E)
@@ -286,9 +285,10 @@ def prim(dataset):
     print("[PRIM] Found MST in: ", datetime.now() - timestamp)
     score = 0
     for edge in mst:
-        score = score+edge[2]
+        score = score + edge[2]
     print("[PRIM] Score: ", score)
     plot_mst(dataset[0][0], mst, False, False)
+
 
 def create_adjacency_list(n, mst):
     adj = [[] for i in range(n)]
@@ -297,14 +297,16 @@ def create_adjacency_list(n, mst):
         adj[edge[1]].append(edge[0])
     return adj
 
+
 def get_edge_cluster(clusters, e):
     for c in clusters:
         if e[0] in c and e[1] in c:
             return clusters.index(c)
 
+
 def create_clustering(n, mst, k):
     # Sort mst to get highest weighted edges
-    mst.sort(key= lambda x: x[2], reverse=True)
+    mst.sort(key=lambda x: x[2], reverse=True)
     # Create adj matrix for ez BFS
     adj = create_adjacency_list(n, mst)
     # Initialize clusters data structure
@@ -328,7 +330,7 @@ def create_clustering(n, mst, k):
         Q.append(rm[0])
         while (len(Q) != 0):
             v = Q.popleft()
-            clusters[c+1].append(v)
+            clusters[c + 1].append(v)
             clusters[hc].remove(v)
             for trg in adj[v]:
                 if (explored[trg]):
@@ -356,7 +358,7 @@ def main():
     print("Starting time:", start_time)
 
     # create_mst()
-    datasets = get_clustering_data()
+    datasets = get_clustering_data(2000)
     for dataset in datasets:
         timestamp = datetime.now()
         print("Start creating Distance Matrix...")
@@ -370,10 +372,7 @@ def main():
         print("Found MST in: ", datetime.now() - timestamp)
         print("Start creating plot of MST...")
         timestamp = datetime.now()
-        score = 0
-        for edge in mst:
-            score = score + edge[2]
-        print("[SPRK] Score: ", score)
+
         plot_mst(dataset[0][0], mst, False, False)
         k = 2
         clusters = create_clustering(len(V), mst, k)
