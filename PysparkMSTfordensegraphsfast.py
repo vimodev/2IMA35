@@ -382,5 +382,11 @@ def main():
     print("Done...")
 
 
+def mst_create(dataset):
+    dm, E, size, vertex_coordinates = create_distance_matrix(dataset)
+    V = list(range(len(dm)))
+    return create_mst(V, E, epsilon=(1/8), size=size, vertex_coordinates=vertex_coordinates)
+
+
 if __name__ == '__main__':
     main()
