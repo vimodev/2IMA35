@@ -7,7 +7,7 @@ from boruvka import boruvka
 from helpers import create_distance_matrix, plot_mst, plot_clustering
 
 level_count = 5
-noise_levels = [i * (0.1 / level_count) for i in range(level_count + 1)]
+noise_levels = [i * (0.5 / level_count) for i in range(level_count + 1)]
 
 
 def make_ansi(n_samples, noise):
@@ -86,29 +86,33 @@ def plot_clusters(vertices, clustering):
 
 def get_stats(dataset, clusters):
     true_clusters = dataset[1][1]
-    for i, cluster in enumerate(true_clusters):
-        true_clusters[i] -= 1
-    true_cluster_size = [0]*dataset[0]
-    for cluster in range(dataset[0]):
-        true_cluster_size[cluster] = np.sum(true_clusters == cluster)
-    total_tp = 0
-    total_fp = 0
-    total_fn = 0
-    for cluster in clusters:
-        classification = [0]*dataset[0]
-        for vertex in cluster:
-            vertex_class = true_clusters[vertex]
-            classification[vertex_class] += 1
-        tp = max(classification)
-        fp = sum(classification) - tp
-        fn = true_cluster_size[classification.index(tp)] - tp
-        total_tp += tp
-        total_fp += fp
-        total_fn += fn
-    precision = total_tp / (total_tp + total_fp)
-    recall = total_tp / (total_tp + total_fn)
-    print("print precision : ", precision)
-    print("print recall : ", recall)
+    tp = 0
+    fp = 0
+    fn = 0
+    for u in range(len(true_clusters)):
+        for v in range(len(true_clusters)):
+            if (u==v):
+                continue
+            inferred = False
+            for c in range(len(clusters)):
+                if u in clusters[c]:
+                    inferred = (v in clusters[c])
+                    break
+            truth = (true_clusters[u] == true_clusters[v])
+            if (truth and inferred):
+                tp += 1
+            elif (truth):
+                fn += 1
+            elif (inferred):
+                fp += 1
+
+    precision = tp / (tp + fp)
+    recall = tp / (tp + fn)
+
+    print("PRECISION: " + str(precision))
+    print("RECALL: " + str(recall))
+            
+    return precision, recall
 
 
 def clustering_mst_mrc(dataset):
@@ -116,7 +120,7 @@ def clustering_mst_mrc(dataset):
     # mst = mst_create(dataset[1][0])
     k = dataset[0]
     clusters = create_clustering(len(dataset[1][0]), mst, k)
-    get_stats(dataset, clusters)
+    #get_stats(dataset, clusters)
     return clusters
 
 
@@ -196,8 +200,31 @@ def custom_dataset():
     plt.yticks(())
     plt.show()
 
+def bench_noise():
+    runs_per_level = 10
+    levels = [i * (0.15 / 50) for i in range(50 + 1)]
+    precisions = [0 for i in range(len(levels))]
+    recalls = [0 for i in range(len(levels))]
+    for i in range(len(levels)):
+        for j in range(runs_per_level):
+            print("level " + str(levels[i]) + " - run " + str(j))
+            dataset = (2, make_moons(n_samples=500,
+                                          noise=levels[i]))
+            clusters = clustering_mst_mrc(dataset)
+            precision, recall = get_stats(dataset, clusters)
+            precisions[i] += precision
+            recalls[i] += recall
+        precisions[i] = precisions[i] / runs_per_level
+        recalls[i] = recalls[i] / runs_per_level
+    plt.plot(levels, precisions, label="Precision")
+    plt.plot(levels, recalls, label="Recall")
+    plt.legend()
+    plt.show()
+
 
 if __name__ == '__main__':
-    custom_dataset()
-    # bench_circle_probability(1500, 0.07, 96)
-    # bench()
+    #custom_dataset()
+    #bench_circle_probability(1500, 0.07, 10)
+    #bench()
+    bench_noise()
+    #generate_test_data(do_plot=True)
