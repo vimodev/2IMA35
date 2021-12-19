@@ -173,15 +173,18 @@ def reduce_edges(vertices, E, c, epsilon):
     :param epsilon:
     :return:The reduced number of edges
     """
-    conf = SparkConf().setAppName('MST_Algorithm')
-    sc = SparkContext.getOrCreate(conf=conf)
-
+    SparkContext.setSystemProperty('spark.executor.memory', '10g')
+    sc = SparkContext("local", "App Name")
     n = len(vertices)
     # k = math.ceil(n ** ((c - epsilon) / 2))
     # U, V = partion_vertices(vertices, k)
 
     # We partition all edges into |E| / n^1+eps partitions
     S = partition_edges(E, total_edges(E) / (n ** (1 + epsilon)))
+    print(total_edges(E) / (n ** (1 + epsilon)))
+    global total_size
+    percentage_graph.append(len(S[0]) / total_size)
+    print("SEND TO MACHINE SIZE, ", len(S[0]))
     # We send the subgraph G=(V, E_i) to each machine
     rddS = sc.parallelize(S).map(lambda x: (find_mst(vertices, [], x)))
     both = rddS.collect()
@@ -213,7 +216,8 @@ def remove_edges(E, removed_edges):
             del E[edge[0]][edge[1]]
     return E
 
-
+total_size = 0
+percentage_graph = []
 def create_mst(V, E, epsilon, size, vertex_coordinates, plot_itermediate=False):
     """
     Creates the mst of the graph G = (V, E).
@@ -226,9 +230,13 @@ def create_mst(V, E, epsilon, size, vertex_coordinates, plot_itermediate=False):
     :param size: number of edges
     :return: returns the reduced graph with at most np.power(n, 1 + epsilon) edges
     """
+    rounds = 0
     n = len(V)
     c = math.log(size / n, n)
+    global total_size
+    total_size = size
     while size > np.power(n, 1 + epsilon):
+        rounds += 1
         print("C: ", c)
         mst, removed_edges = reduce_edges(V, E, c, epsilon)
         if plot_itermediate:
@@ -247,6 +255,11 @@ def create_mst(V, E, epsilon, size, vertex_coordinates, plot_itermediate=False):
         for item2 in items2:
             edges.append((item[0], item2[0], item2[1]))
     mst, removed_edges = find_mst(V, V, edges)
+    from benchmarker import used_rounds
+    used_rounds.append(rounds)
+    plt.plot(percentage_graph)
+    plt.show()
+    print(f"ROUND OF COMMUNICATIONS FOR, {len(V)}, {rounds}")
     return mst
 
 
@@ -347,7 +360,7 @@ def main():
     parser = ArgumentParser()
     parser.add_argument('--test', help="Used for smaller dataset and testing", action="store_true")
     parser.add_argument('--epsilon', help="epsilon [default=1/8]", type=float, default=1 / 8)
-    parser.add_argument('--machines', help="Number of machines [default=1]", type=int, default=1)
+    parser.add_argument('--machines', help="Number of machines [default=1]", type=int, default=10)
     args = parser.parse_args()
 
     print("Start generating MST")
@@ -383,9 +396,15 @@ def main():
 
 
 def mst_create(dataset):
+    global percentage_graph
+    percentage_graph = []
+    print("Start creating MST...")
+    timestamp = datetime.now()
     dm, E, size, vertex_coordinates = create_distance_matrix(dataset)
     V = list(range(len(dm)))
-    return create_mst(V, E, epsilon=(1/8), size=size, vertex_coordinates=vertex_coordinates)
+    mst = create_mst(V, E, epsilon=(1/8), size=size, vertex_coordinates=vertex_coordinates)
+    print("Found MST in: ", datetime.now() - timestamp)
+    return mst
 
 
 if __name__ == '__main__':

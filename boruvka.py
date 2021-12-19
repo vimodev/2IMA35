@@ -15,14 +15,10 @@ def boruvka(dataset):
     for vertex in range(len(dataset)):
         create_component(components, vertex)
 
-    print("Start creating MST...")
-    timestamp = datetime.now()
 
     while len(components.keys()) >= 2:
         random_component = random.choice(list(components.values()))
         random_component.merge_with_best(components, dm)
-
-    print("Found MST in: ", datetime.now() - timestamp)
 
     mst = list(list(components.values())[0].edges)
     return mst

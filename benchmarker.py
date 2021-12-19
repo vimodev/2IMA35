@@ -1,3 +1,6 @@
+import random
+from datetime import datetime
+
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.datasets import make_circles, make_moons, make_blobs
@@ -7,11 +10,11 @@ from boruvka import boruvka
 from helpers import create_distance_matrix, plot_mst, plot_clustering
 
 level_count = 5
-noise_levels = [i * (0.5 / level_count) for i in range(level_count + 1)]
+noise_levels = [0.0 + i * (1 / level_count) for i in range(level_count + 1)]
 
 
 def make_ansi(n_samples, noise):
-    X, y = make_blobs(n_samples=n_samples, random_state=170,
+    X, y = make_blobs(n_samples=n_samples, random_state=random.randint(1,100),
                       cluster_std=[noise * i for i in range(1, 4)])
     transformation = [[0.6, -0.6], [-0.4, 0.8]]
     X_aniso = np.dot(X, transformation)
@@ -20,12 +23,12 @@ def make_ansi(n_samples, noise):
 
 def generate_test_data(n_samples=2000, do_plot=True):
     datasets = []
-    datasets = datasets + [(2, make_circles(n_samples=n_samples, factor=.5,
-                                            noise=noise)) for noise in noise_levels]
-    datasets = datasets + [(2, make_moons(n_samples=n_samples,
-                                          noise=noise)) for noise in noise_levels]
-    datasets = datasets + [(3, make_blobs(n_samples=n_samples, random_state=5,
-                                          cluster_std=[noise * i for i in range(1, 4)])) for noise in noise_levels]
+    # datasets = datasets + [(2, make_circles(n_samples=n_samples, factor=.5,
+                                            # noise=noise)) for noise in noise_levels]
+    # datasets = datasets + [(2, make_moons(n_samples=n_samples,
+                                          # noise=noise)) for noise in noise_levels]
+    # datasets = datasets + [(3, make_blobs(n_samples=n_samples, random_state=random.randint(1, 100),
+    #                                       cluster_std=[noise * i for i in range(1, 4)])) for noise in noise_levels]
     datasets = datasets + [(3, make_ansi(n_samples, noise)) for noise in noise_levels]
 
     if do_plot:
@@ -48,7 +51,7 @@ def plot_datasets(p_datasets):
         plt.xticks(())
         plt.yticks(())
         if i <= level_count:
-            plt.title(f"Noise amount: {round(noise_levels[i], 2)}", size=24)
+            plt.title(f"Noise amount: {round(noise_levels[i], 4)}", size=24)
     plt.show()
 
 
@@ -80,7 +83,7 @@ def plot_clusters(vertices, clustering):
         plt.xticks(())
         plt.yticks(())
         if i <= level_count:
-            plt.title(f"Noise amount: {round(noise_levels[i], 2)}", size=18)
+            plt.title(f"Noise amount: {round(noise_levels[i], 5)}", size=24)
     plt.show()
 
 
@@ -111,7 +114,7 @@ def get_stats(dataset, clusters):
 
     print("PRECISION: " + str(precision))
     print("RECALL: " + str(recall))
-            
+
     return precision, recall
 
 
@@ -137,8 +140,10 @@ def bench():
 
 def bench_circle_probability(n_samples, noise, rounds):
     datasets = []
-    datasets = datasets + [(2, make_circles(n_samples=n_samples, factor=.5,
-                                            noise=noise)) for _ in range(rounds)]
+    datasets = datasets + [(3, make_blobs(n_samples=n_samples, random_state=random.randint(1, 200),
+                                          cluster_std=[noise * i for i in range(1, 4)])) for _ in range(rounds)]
+    # datasets = datasets + [(2, make_circles(n_samples=n_samples, factor=.5,
+    #                                         noise=noise)) for _ in range(rounds)]
     count_failed = 0
     res = []
     results = []
@@ -201,19 +206,27 @@ def custom_dataset():
     plt.show()
 
 def bench_noise():
-    runs_per_level = 10
-    levels = [i * (0.15 / 50) for i in range(50 + 1)]
+    runs_per_level = 100
+    level_count = 100
+    levels = [i * (1 / level_count) for i in range(level_count + 1)]
     precisions = [0 for i in range(len(levels))]
     recalls = [0 for i in range(len(levels))]
     for i in range(len(levels)):
         for j in range(runs_per_level):
+            print("Start creating MST...")
+            timestamp = datetime.now()
             print("level " + str(levels[i]) + " - run " + str(j))
-            dataset = (2, make_moons(n_samples=500,
-                                          noise=levels[i]))
+            # dataset = (2, make_moons(n_samples=500,
+            #                               noise=levels[i]))
+            # dataset = (3, make_blobs(n_samples=250, random_state=random.randint(1,100),
+                       # cluster_std=[levels[i] * _ for _ in range(1, 4)]))
+            # dataset = (3, make_ansi(n_samples=250, noise=[levels[i]]))
+            dataset = (3, make_ansi(n_samples=250, noise=levels[i]))
             clusters = clustering_mst_mrc(dataset)
             precision, recall = get_stats(dataset, clusters)
             precisions[i] += precision
             recalls[i] += recall
+            print("Found MST in: ", datetime.now() - timestamp)
         precisions[i] = precisions[i] / runs_per_level
         recalls[i] = recalls[i] / runs_per_level
     plt.plot(levels, precisions, label="Precision")
@@ -221,10 +234,18 @@ def bench_noise():
     plt.legend()
     plt.show()
 
+used_rounds = []
+
+def bench_rounds():
+    for i in range(1,100):
+        samples = i * 50
+        dataset = make_moons(n_samples=samples, noise=0.2)
+        mst_create(dataset[0])
+
 
 if __name__ == '__main__':
-    #custom_dataset()
-    #bench_circle_probability(1500, 0.07, 10)
-    #bench()
-    bench_noise()
+    # custom_dataset()
+    # bench_circle_probability(2000, 0.075, 6)
+    # bench()
+    bench_rounds()
     #generate_test_data(do_plot=True)
