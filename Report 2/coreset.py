@@ -14,13 +14,13 @@ def k_means_plus_plus(P, k):
     n = len(P)
     x = random.random()
     centroids = []
-    centroids.append(math.ceil(x * n))
+    centroids.append(P[math.ceil(x * n)])
     minDistances = []
     for j in range(n):
         minDistances.append(float('inf'))
     for i in range(1, k):
         for j in range(n):
-            x = distance(P[j], P[centroids[i-1]])
+            x = distance(P[j], centroids[i-1])
             if (minDistances[j] > x):
                 minDistances[j] = x
         cumulative = []
@@ -35,8 +35,41 @@ def k_means_plus_plus(P, k):
             for j in range(1, n):
                 if (x > cumulative[j-1] and x <= cumulative[j]):
                     index = j
-        centroids.append(index)
+        centroids.append(P[index])
     return centroids
+
+"""
+ Given the centroids, compute the clustering
+"""
+def compute_labels(P, centroids):
+    labels = [-1 for i in range(len(P))]
+    for i in range(len(P)):
+        minDistance = float('inf')
+        for j in range(len(centroids)):
+            d = distance(P[i], centroids[j])
+            if (d < minDistance):
+                minDistance = d
+                labels[i] = j
+    return labels
+
+def compute_centroids(P, labels, k):
+    cluster_sizes = [0 for i in range(k)]
+    point_sum = [[0, 0] for i in range(k)]
+    for i in range(len(P)):
+        cluster_sizes[labels[i]] += 1
+        point_sum[labels[i]][0] += P[i][0]
+        point_sum[labels[i]][1] += P[i][1]
+    centroids = [[0,0] for i in range(k)]
+    for i in range(k):
+        centroids[i][0] = point_sum[i][0] / cluster_sizes[i]
+        centroids[i][1] = point_sum[i][1] / cluster_sizes[i]
+    return centroids
+
+def centroids_changed(old, new):
+    for i in range(len(old)):
+        if (old[i][0] != new[i][0] or old[i][1] != new[i][1]):
+            return True
+    return False
 
 """
  Use kMeans algorithm to cluster points, 
@@ -46,7 +79,15 @@ def k_means_plus_plus(P, k):
 """
 def k_means(P, k):
     centroids = k_means_plus_plus(P, k)
-    
+    changed = True
+    while changed:
+        print(centroids)
+        labels = compute_labels(P, centroids)
+        old_centroids = centroids
+        centroids = compute_centroids(P, labels, k)
+        changed = centroids_changed(old_centroids, centroids)
+    return centroids
+
 
 
 def coreset_construction(P, k, eps):
