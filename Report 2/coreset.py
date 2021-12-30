@@ -86,8 +86,14 @@ def k_means(P, k):
         old_centroids = centroids
         centroids = compute_centroids(P, labels, k)
         changed = centroids_changed(old_centroids, centroids)
-    return centroids
+    return centroids, compute_labels(P, centroids)
 
+
+def cost(P, centroids, labels):
+    sum = 0
+    for i in range(len(P)):
+        sum += distance(P[i], centroids[labels[i]])
+    return sum
 
 
 def coreset_construction(P, k, eps):
@@ -95,4 +101,5 @@ def coreset_construction(P, k, eps):
     S = []
     a = 1
     z = math.log(n) * math.log(a * math.log(n))
-    C = k_means(P, k)
+    C, labels = k_means(P, k)
+    r = math.sqrt(cost(P, C, labels) / (a * math.log(n) * n))
