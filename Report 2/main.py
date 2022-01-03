@@ -20,7 +20,8 @@ def main():
         print("Created distance matrix in: ", datetime.now() - timestamp)
         print("Start creating coreset")
         timestamp = datetime.now()
-        coreset_construction(vertex_coordinates, 5, 0.02)
+        S = coreset_construction(vertex_coordinates, 5, 0.1)
+        print(len(S))
 
 
 
