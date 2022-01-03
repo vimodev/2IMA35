@@ -16,6 +16,7 @@ def divide(vertices, t):
     return subsets
 
 def mpc_coreset(vertices, k, eps):
+    sc = SparkContext("local", "App Name")
     n = len(vertices)
     # Set default weights to 1
     for i in range(n):
@@ -31,13 +32,17 @@ def mpc_coreset(vertices, k, eps):
         print("#Qs: " + str(len(Qs)))
         # Combine all pairs, and compute coreset of coreset
         newQs = []
+        inputs = []
         for i in range(0, len(Qs) - 1, 2):
             print("Handling pair...")
             left = Qs[i]
             right = Qs[i + 1]
-            union = left + right
-            union_coreset = coreset_construction(union, k, eps / (4 * level))
-            newQs.append(union_coreset)
+            inputs.append([left, right])
+            # union = left + right
+            # union_coreset = coreset_construction(union, k, eps / (4 * level))
+            # newQs.append(union_coreset)
+        rddS = sc.parallelize(inputs).map(lambda x: (coreset_construction(x[0] + x[1], k, eps / (4 * level))))
+        newQs = rddS.collect()
         # If odd number, re add last untreated subset
         if (len(Qs) % 2 == 1):
             newQs.append(Qs[len(Qs) - 1])
