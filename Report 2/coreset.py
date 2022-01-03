@@ -14,7 +14,7 @@ def k_means_plus_plus(P, k):
     n = len(P)
     x = random.random()
     centroids = []
-    centroids.append(P[math.ceil(x * n)])
+    centroids.append(P[math.floor(x * n)])
     minDistances = []
     for j in range(n):
         minDistances.append(float('inf'))
@@ -162,6 +162,7 @@ def get_cell_points(cell, candidates, P):
 """
  Construct a coreset for the given P, k and eps
  Follows pseudocode from the course notes
+ Each point in P is [x, y, weight=1]
 """
 def coreset_construction(P, k, eps):
     # 2-Dimensional, and the a in a log (n)
@@ -193,11 +194,13 @@ def coreset_construction(P, k, eps):
             else:
                 # Otherwise, get a representative
                 rep = P[points[0]]
-                # And add it to S with weight
-                S.append([rep[0], rep[1], len(points)])
                 # Set all points to handled
+                w = 0
                 for j in range(len(points)):
                     handled[points[j]] = True
+                    w += P[points[j]][2]
+                # And add it to S with weight
+                S.append([rep[0], rep[1], w])
     
     # Now do the donuts for all centers
     for j in range(1, math.ceil(z) + 1):
@@ -215,10 +218,12 @@ def coreset_construction(P, k, eps):
                 else:
                     # Otherwise, get a representative
                     rep = P[points[0]]
-                    # And add it to S with weight
-                    S.append([rep[0], rep[1], len(points)])
                     # Set all points to handled
-                    for j in range(len(points)):
-                        handled[points[j]] = True
+                    w = 0
+                    for u in range(len(points)):
+                        handled[points[u]] = True
+                        w += P[points[u]][2]
+                    # And add it to S with weight
+                    S.append([rep[0], rep[1], w])
     
     return S
