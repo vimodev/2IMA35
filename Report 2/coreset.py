@@ -64,6 +64,8 @@ def compute_centroids(P, labels, k):
         point_sum[labels[i]][1] += P[i][1]
     centroids = [[0,0] for i in range(k)]
     for i in range(k):
+        if (cluster_sizes[i] == 0):
+            cluster_sizes[i] = 1
         centroids[i][0] = point_sum[i][0] / cluster_sizes[i]
         centroids[i][1] = point_sum[i][1] / cluster_sizes[i]
     return centroids
@@ -80,7 +82,7 @@ def centroids_changed(old, new):
 """
  Use kMeans algorithm to cluster points, 
  based on pseudocode from lecture.
- :param P: Set of points like [[x, y], [x, y], [x, y]]
+ :param P: Set of points like [[x, y, w], [x, y, w], [x, y, w]]
  :param k: the number of centroids
 """
 def k_means(P, k):
@@ -100,7 +102,20 @@ def k_means(P, k):
 def cost(P, centroids, labels):
     sum = 0
     for i in range(len(P)):
-        sum += distance(P[i], centroids[labels[i]])
+        sum += P[i][2] * distance(P[i], centroids[labels[i]]) ** 2
+    return sum
+
+def cost_no_labels(P, C):
+    sum = 0
+    for i in range(len(P)):
+        min_distance = float('inf')
+        centroid = -1
+        for j in range(len(C)):
+            d = distance(P[i], C[j])
+            if (d < min_distance):
+                min_distance = d
+                centroid = j
+        sum += P[i][2] * distance(P[i], C[centroid]) ** 2
     return sum
 
 """
@@ -147,17 +162,37 @@ def get_ball_candidates(center, radius, P, handled):
 def inside_cell(cell, point):
     return (point[0] >= cell[0] and point[1] >= cell[1] and point[0] < cell[0] + cell[2] and point[1] < cell[1] + cell[2])
 
+def inside_cell_x(cell, point):
+    return (point[0] >= cell[0] and point[0] < cell[0] + cell[2])
+
+def inside_cell_y(cell, point):
+    return (point[1] >= cell[1] and point[1] < cell[1] + cell[2])
+
 """
  Given a cell belonging to a ball, get the Points indexes
- that lie within
+ that lie within. Points and candidates must be sorted on x
 """
 def get_cell_points(cell, candidates, P):
     result = []
+    in_x_range = False
+    # Go over all candidates
     for i in range(len(candidates)):
-        if (inside_cell(cell, P[candidates[i]])):
-            result.append(candidates[i])
+        # If we're in the appropriate x range in 
+        if (inside_cell_x(cell, P[candidates[i]])):
+            in_x_range = True
+            if (inside_cell_y(cell, P[candidates[i]])):
+                result.append(candidates[i])
+        elif (in_x_range):
+            break
     return result
 
+def get_x(p):
+    return p[0]
+
+def coreset_verify(P, S, C, eps):
+    cost_p = cost_no_labels(P, C)
+    cost_s = cost_no_labels(S, C)
+    return (abs(cost_s - cost_p) <= eps * cost_p)
 
 """
  Construct a coreset for the given P, k and eps
@@ -176,6 +211,8 @@ def coreset_construction(P, k, eps):
     C, labels = k_means(P, k)
     r = math.sqrt(cost(P, C, labels) / (a * math.log(n) * n))
     x = (eps * r) / math.sqrt(d)
+
+    P.sort(key=get_x)
 
     # For each center
     for c in range(len(C)):
