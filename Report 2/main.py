@@ -28,11 +28,14 @@ def mpc_coreset(vertices, k, eps):
     # Set default weights to 1
     for i in range(n):
         vertices[i].append(1)
-
     t = math.ceil(math.sqrt(n))
+    print("Dividing vertices into " + str(t) + " subsets...")
     Ps = divide(vertices, t)
-    Qs = [coreset_construction(Ps[i], k, eps) for i in range(len(Ps))]
+    print("Computing coresets...")
+    rddS = sc.parallelize(Ps).map(lambda P: (coreset_construction(P, k, eps)))
+    Qs = rddS.collect()
     level = 2
+    print("Starting coreset merging...")
     # Simple while loop for now, this must become pyspark parallelized
     while (len(Qs) != 1):
         print("Level: " + str(level))
@@ -61,11 +64,11 @@ def mpc_coreset(vertices, k, eps):
         
 
 def main():
-    k = 10
-    eps = 0.1
+    k = 3
+    eps = 0.25
 
     datasets = get_clustering_data(1000)
-    for dataset in datasets[0:1]:
+    for dataset in datasets:
         timestamp = datetime.now()
         print("Start creating Distance Matrix...")
         dm, E, size, vertex_coordinates = create_distance_matrix(dataset[0][0])
@@ -79,7 +82,7 @@ def main():
         print(len(S))
         # Verify if its correct
         print("Verifying coreset on random centroids...")
-        for i in range(100):
+        for i in range(1000):
             centroids = random.sample(vertex_coordinates, k)
             if not (coreset_verify(vertex_coordinates, S, centroids, eps)):
                 print("Invalid coreset! Does not adhere to the error bound!")
