@@ -1,6 +1,7 @@
 import math
 import random
 from datetime import datetime
+import time
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -64,18 +65,45 @@ def mpc_coreset(vertices, k, eps):
         
 
 def main():
-    k = 3
-    eps = 0.25
+    ks = [10]
+    eps = [0.05, 0.1, 0.2, 0.3, 0.5, 0.75, 1]
 
-    datasets = get_clustering_data(100000)
-    for dataset in datasets:
-        vertex_coordinates = create_vertex_coordinates(dataset[0][0])
-        V = list(range(len(vertex_coordinates)))
-        print("Size dataset: ", len(vertex_coordinates))
-        print("Start creating coreset")
-        #S = mpc_coreset(vertex_coordinates, k, eps)
-        S = coreset(vertex_coordinates, k, eps)
-        print(len(S))
+    sizes = [1000, 5000, 10000, 50000, 100000]
+    size = sizes[4]
+    datasets = get_clustering_data(size, 0.06)
+
+    for k in ks:
+        print("k ", k)
+        coresets = [[] for i in range(len(datasets))]
+        for d in range(len(datasets)):
+            print("Dataset ", d)
+            dataset = datasets[d]
+            vertices = create_vertex_coordinates(dataset[0][0])
+            for e in eps:
+                print("Epsilon ", e)
+                coresets[d].append(coreset(vertices, k, e))
+
+        coreset_sizes = [[len(coresets[d][e]) for e in range(len(eps))] for d in range(len(datasets))]
+
+        plt.clf()
+        plt.plot(eps, coreset_sizes[0], label="circles")
+        plt.plot(eps, coreset_sizes[1], label="moons")
+        plt.plot(eps, coreset_sizes[2], label="blobs")
+        plt.legend()
+        plt.xticks(eps, eps, fontsize=8)
+        plt.savefig(str(size) + '-sizes-' + str(k) + '.png', bbox_inches='tight')
+
+    # datasets = get_clustering_data(10000, 0.06)
+    # for dataset in datasets:
+    #     timestamp = datetime.now()
+    #     vertex_coordinates = create_vertex_coordinates(dataset[0][0])
+    #     V = list(range(len(vertex_coordinates)))
+    #     print("Size dataset: ", len(vertex_coordinates))
+    #     print("Start creating coreset")
+    #     #S = mpc_coreset(vertex_coordinates, k, eps)
+    #     S = coreset(vertex_coordinates, k, eps)
+    #     print(len(S))
+    #     print("Coreset took: ", datetime.now() - timestamp)
         # # Verify if its correct
         # print("Verifying coreset on random centroids...")
         # for i in range(100):
