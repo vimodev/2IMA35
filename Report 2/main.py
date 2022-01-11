@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pyspark import SparkConf, SparkContext
 
-from helpers import get_clustering_data, create_distance_matrix
+from helpers import get_clustering_data, create_vertex_coordinates
 from coreset import coreset_construction, coreset_verify
 
 def divide(vertices, t):
@@ -67,25 +67,21 @@ def main():
     k = 3
     eps = 0.25
 
-    datasets = get_clustering_data(1000)
+    datasets = get_clustering_data(100000)
     for dataset in datasets:
-        timestamp = datetime.now()
-        print("Start creating Distance Matrix...")
-        dm, E, size, vertex_coordinates = create_distance_matrix(dataset[0][0])
-        V = list(range(len(dm)))
-        print("Size dataset: ", len(dm))
-        print("Created distance matrix in: ", datetime.now() - timestamp)
+        vertex_coordinates = create_vertex_coordinates(dataset[0][0])
+        V = list(range(len(vertex_coordinates)))
+        print("Size dataset: ", len(vertex_coordinates))
         print("Start creating coreset")
-        timestamp = datetime.now()
         #S = mpc_coreset(vertex_coordinates, k, eps)
         S = coreset(vertex_coordinates, k, eps)
         print(len(S))
-        # Verify if its correct
-        print("Verifying coreset on random centroids...")
-        for i in range(1000):
-            centroids = random.sample(vertex_coordinates, k)
-            if not (coreset_verify(vertex_coordinates, S, centroids, eps)):
-                print("Invalid coreset! Does not adhere to the error bound!")
+        # # Verify if its correct
+        # print("Verifying coreset on random centroids...")
+        # for i in range(100):
+        #     centroids = random.sample(vertex_coordinates, k)
+        #     if not (coreset_verify(vertex_coordinates, S, centroids, eps)):
+        #         print("Invalid coreset! Does not adhere to the error bound!")
 
 
 

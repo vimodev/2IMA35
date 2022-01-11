@@ -45,6 +45,11 @@ def get_clustering_data(n_samples=1500, noise=0):
 
     return datasets
 
+def create_vertex_coordinates(dataset):
+    vertices = []
+    for line in dataset:
+        vertices.append([line[0], line[1]])
+    return vertices
 
 def create_distance_matrix(dataset):
     """
