@@ -52,6 +52,27 @@ def create_distance_matrix(dataset):
     return d_matrix, dict, size, vertices
 
 
+def load_txt_to_data(filepath):
+    """
+    Loads a CSV dataset
+    """
+    dataset = []
+    with open(filepath) as file:
+        for line in file:
+            line = line.strip("\t")
+            line = line.strip("\n")
+            line = line.strip("\ufeff")
+            line = line.split(",")
+            line = [float(line[0]), float(line[1])]
+            dataset.append(line)
+    dataset = np.array(dataset)
+    plt.scatter(x=dataset[:, 0], y=dataset[:, 1], s=1)
+    plt.xticks(())
+    plt.yticks(())
+    plt.show()
+    return [dataset], {}
+
+
 def get_key(item):
     """
     returns the sorting criteria for the edges. All edges are sorted from small to large values

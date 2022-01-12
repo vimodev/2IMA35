@@ -7,14 +7,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pyspark import SparkConf, SparkContext
 
-from helpers import get_clustering_data, create_vertex_coordinates
+from helpers import get_clustering_data, create_vertex_coordinates, load_txt_to_data, create_distance_matrix
 from coreset import coreset_construction, coreset_verify, cost_no_labels, k_means, cost
+
 
 def divide(vertices, t):
     subsets = [[] for i in range(t)]
     for i in range(len(vertices)):
         subsets[i % t].append(vertices[i])
     return subsets
+
 
 def coreset(vertices, k, eps):
     n = len(vertices)
@@ -23,8 +25,11 @@ def coreset(vertices, k, eps):
         vertices[i].append(1)
     return coreset_construction(vertices, k, eps)
 
+
 def mpc_coreset(vertices, k, eps):
-    sc = SparkContext("local", "App Name")
+    conf = SparkConf()
+    conf.setMaster("local[8]")
+    sc = SparkContext.getOrCreate(conf=conf)
     n = len(vertices)
     # Set default weights to 1
     for i in range(n):
@@ -62,7 +67,12 @@ def mpc_coreset(vertices, k, eps):
     return Qs[0]
 
 
-        
+def custom_dataset():
+    k = 3
+    eps = 0.25
+    dataset = load_txt_to_data("oaklandbusiness.csv")
+    coreset_dataset(k, eps, dataset)
+
 
 def main():
     ks = [1, 2, 5, 10]
@@ -125,24 +135,25 @@ def main():
         # plt.xticks(eps, eps, fontsize=8)
         # plt.savefig(str(size) + '-sizes-' + str(k) + '.png', bbox_inches='tight')
 
-    # datasets = get_clustering_data(10000, 0.06)
-    # for dataset in datasets:
-    #     timestamp = datetime.now()
-    #     vertex_coordinates = create_vertex_coordinates(dataset[0][0])
-    #     V = list(range(len(vertex_coordinates)))
-    #     print("Size dataset: ", len(vertex_coordinates))
-    #     print("Start creating coreset")
-    #     #S = mpc_coreset(vertex_coordinates, k, eps)
-    #     S = coreset(vertex_coordinates, k, eps)
-    #     print(len(S))
-    #     print("Coreset took: ", datetime.now() - timestamp)
-        # # Verify if its correct
-        # print("Verifying coreset on random centroids...")
-        # for i in range(100):
-        #     centroids = random.sample(vertex_coordinates, k)
-        #     if not (coreset_verify(vertex_coordinates, S, centroids, eps)):
-        #         print("Invalid coreset! Does not adhere to the error bound!")
 
+def coreset_dataset(k, eps, p_dataset):
+    timestamp = datetime.now()
+    print("Start creating Distance Matrix...")
+    dm, E, size, vertex_coordinates = create_distance_matrix(p_dataset[0][0])
+    V = list(range(len(dm)))
+    print("Size dataset: ", len(dm))
+    print("Created distance matrix in: ", datetime.now() - timestamp)
+    print("Start creating coreset")
+    timestamp = datetime.now()
+    # S = mpc_coreset(vertex_coordinates, k, eps)
+    S = coreset(vertex_coordinates, k, eps)
+    print(len(S))
+    # Verify if its correct
+    print("Verifying coreset on random centroids...")
+    for i in range(1000):
+        centroids = random.sample(vertex_coordinates, k)
+        if not (coreset_verify(vertex_coordinates, S, centroids, eps)):
+            print("Invalid coreset! Does not adhere to the error bound!")
 
 
 if __name__ == '__main__':
