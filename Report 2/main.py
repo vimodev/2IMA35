@@ -8,7 +8,7 @@ import numpy as np
 from pyspark import SparkConf, SparkContext
 
 from helpers import get_clustering_data, create_vertex_coordinates
-from coreset import coreset_construction, coreset_verify
+from coreset import coreset_construction, coreset_verify, cost_no_labels, k_means, cost
 
 def divide(vertices, t):
     subsets = [[] for i in range(t)]
@@ -65,33 +65,65 @@ def mpc_coreset(vertices, k, eps):
         
 
 def main():
-    ks = [10]
-    eps = [0.05, 0.1, 0.2, 0.3, 0.5, 0.75, 1]
+    ks = [1, 2, 5, 10]
+    eps = [0.05, 0.1, 0.2, 0.3, 0.5, 0.75, 0.99]
 
     sizes = [1000, 5000, 10000, 50000, 100000]
-    size = sizes[4]
+    size = 5000
     datasets = get_clustering_data(size, 0.06)
 
-    for k in ks:
-        print("k ", k)
-        coresets = [[] for i in range(len(datasets))]
-        for d in range(len(datasets)):
-            print("Dataset ", d)
-            dataset = datasets[d]
-            vertices = create_vertex_coordinates(dataset[0][0])
-            for e in eps:
-                print("Epsilon ", e)
-                coresets[d].append(coreset(vertices, k, e))
+    samples = 10
 
-        coreset_sizes = [[len(coresets[d][e]) for e in range(len(eps))] for d in range(len(datasets))]
+    for d in range(len(datasets)):
+        print("Dataset: ", d)
+        dataset = datasets[d]
+        vertices = create_vertex_coordinates(dataset[0][0])
+        for i in range(len(vertices)):
+            vertices[i].append(1)
+        for k in ks:
+            print("k: ", k)
+            costs = [0 for i in range(len(eps))]
+            kmcost = 0
+            for s in range(samples):
+                print("s: ", s)
+                centroids, labels = k_means(vertices, k)
+                kmcost += cost(vertices, centroids, labels)
+                i = 0
+                for e in eps:
+                    S = coreset(vertices, k, e)
+                    costs[i] += cost_no_labels(S, centroids)
+                    i += 1
+            for i in range(len(costs)):
+                costs[i] /= kmcost
+            plt.clf()
+            plt.hlines(1, 0, 1, label="k-means", color='g', linestyles='dashdot')
+            plt.plot(eps, costs, label="coreset", color='r')
+            plt.legend()
+            plt.xticks(eps, eps, fontsize=8)
+            plt.savefig(str(d) + '-cost-' + str(k) + '.png', bbox_inches='tight')
 
-        plt.clf()
-        plt.plot(eps, coreset_sizes[0], label="circles")
-        plt.plot(eps, coreset_sizes[1], label="moons")
-        plt.plot(eps, coreset_sizes[2], label="blobs")
-        plt.legend()
-        plt.xticks(eps, eps, fontsize=8)
-        plt.savefig(str(size) + '-sizes-' + str(k) + '.png', bbox_inches='tight')
+    # for k in ks:
+    #     print("k ", k)
+    #     coresets = [[] for i in range(len(datasets))]
+    #     for d in range(len(datasets)):
+    #         print("Dataset ", d)
+    #         dataset = datasets[d]
+    #         vertices = create_vertex_coordinates(dataset[0][0])
+    #         for e in eps:
+    #             print("Epsilon ", e)
+    #             coresets[d].append(coreset(vertices, k, e))
+
+        
+
+        # coreset_sizes = [[len(coresets[d][e]) for e in range(len(eps))] for d in range(len(datasets))]
+
+        # plt.clf()
+        # plt.plot(eps, coreset_sizes[0], label="circles")
+        # plt.plot(eps, coreset_sizes[1], label="moons")
+        # plt.plot(eps, coreset_sizes[2], label="blobs")
+        # plt.legend()
+        # plt.xticks(eps, eps, fontsize=8)
+        # plt.savefig(str(size) + '-sizes-' + str(k) + '.png', bbox_inches='tight')
 
     # datasets = get_clustering_data(10000, 0.06)
     # for dataset in datasets:
