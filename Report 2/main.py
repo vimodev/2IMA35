@@ -100,7 +100,7 @@ def main():
                 kmcost += cost(vertices, centroids, labels)
                 i = 0
                 for e in eps:
-                    S = coreset(vertices, k, e)
+                    S = mpc_coreset(vertices, k, e)
                     costs[i] += cost_no_labels(S, centroids)
                     i += 1
             for i in range(len(costs)):
